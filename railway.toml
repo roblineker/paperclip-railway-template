@@ -2,7 +2,7 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 [deploy]
-startCommand = "chmod -R 777 /paperclip && node /wrapper/src/server.js"
+startCommand = "node /wrapper/src/server.js"
 healthcheckPath = "/setup/healthz"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
