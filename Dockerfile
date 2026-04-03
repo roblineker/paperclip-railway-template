@@ -51,5 +51,9 @@ RUN mkdir -p /paperclip \
 # Railway sets PORT at runtime and this process binds to it.
 # Entrypoint runs as root, fixes /paperclip volume permissions, then execs as node.
 EXPOSE 3100
+RUN useradd -m -u 1001 -s /bin/bash paperclip && \
+    chown -R paperclip:paperclip /app /paperclip
+USER paperclip
+
 ENTRYPOINT ["/wrapper/entrypoint.sh"]
 CMD ["node", "/wrapper/src/server.js"]
