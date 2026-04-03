@@ -52,8 +52,9 @@ RUN mkdir -p /paperclip \
 # Entrypoint runs as root, fixes /paperclip volume permissions, then execs as node.
 EXPOSE 3100
 RUN useradd -m -u 1001 -s /bin/bash paperclip && \
-    chown -R paperclip:paperclip /app /paperclip
-USER paperclip
-
+    chown -R paperclip:paperclip /app /paperclip /wrapper
+# Do NOT set USER here — entrypoint.sh runs as root to fix volume permissions,
+# then drops to paperclip via gosu.
 ENTRYPOINT ["/wrapper/entrypoint.sh"]
 CMD ["node", "/wrapper/src/server.js"]
+
