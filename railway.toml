@@ -1,7 +1,6 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-
 [deploy]
 startCommand = "chmod -R 777 /paperclip && node /wrapper/src/server.js"
 healthcheckPath = "/setup/healthz"
