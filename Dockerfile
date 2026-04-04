@@ -5,6 +5,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     git \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 
@@ -19,7 +20,7 @@ RUN pnpm --filter @paperclipai/plugin-sdk build
 RUN pnpm --filter @paperclipai/server build
 RUN test -f server/dist/index.js
 
-# Runtime image (direct Paperclip server, no wrapper).
+# Runtime image.
 FROM node:22-bookworm
 ENV NODE_ENV=production
 
@@ -28,6 +29,7 @@ RUN apt-get update \
     ca-certificates \
     curl \
     gosu \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 
@@ -42,19 +44,16 @@ COPY scripts/entrypoint.sh /wrapper/entrypoint.sh
 COPY scripts/bootstrap-ceo.mjs /wrapper/template/bootstrap-ceo.mjs
 RUN chmod +x /wrapper/entrypoint.sh
 
-# Optional local adapters/tools parity with upstream Dockerfile.
+# Install local adapters.
 RUN npm install --global --omit=dev @anthropic-ai/claude-code@latest @openai/codex@latest opencode-ai
 RUN npm install --global --omit=dev tsx
-RUN mkdir -p /paperclip \
-    && chown -R node:node /app /paperclip /wrapper
 
-# Railway sets PORT at runtime and this process binds to it.
-# Entrypoint runs as root, fixes /paperclip volume permissions, then execs as node.
+# Create paperclip user and set ownership.
+RUN useradd -m -u 1001 -s /bin/bash paperclip \
+    && mkdir -p /paperclip \
+    && chown -R paperclip:paperclip /app /paperclip /wrapper
+
+# Entrypoint runs as root to fix /paperclip volume permissions, then drops to paperclip via gosu.
 EXPOSE 3100
-RUN useradd -m -u 1001 -s /bin/bash paperclip && \
-    chown -R paperclip:paperclip /app /paperclip /wrapper
-# Do NOT set USER here — entrypoint.sh runs as root to fix volume permissions,
-# then drops to paperclip via gosu.
 ENTRYPOINT ["/wrapper/entrypoint.sh"]
 CMD ["node", "/wrapper/src/server.js"]
-
